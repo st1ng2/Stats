@@ -1,0 +1,8 @@
+{
+    "name": "Stats",
+    "version": "1.0.0",
+    "description": "Встраивает статистику игроков на сайт",
+    "authors": ["Flames"],
+    "providers": ["Flute\\Modules\\Stats\\src\\ServiceProviders\\StatsServiceProvider"],
+    "dependencies": {}
+}
