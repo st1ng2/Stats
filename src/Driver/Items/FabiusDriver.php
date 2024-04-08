@@ -8,15 +8,15 @@ use Flute\Core\Table\TableColumn;
 use Flute\Core\Table\TablePreparation;
 use Flute\Modules\Stats\src\Contracts\DriverInterface;
 
-class LevelsRanksDriver implements DriverInterface
+class FabiusDriver implements DriverInterface
 {
     protected string $ranks = 'default';
     protected string $table = 'base';
 
     public function __construct(array $config = [])
     {
-        $this->ranks = isset ($config['ranks']) ? $config['ranks'] : 'default';
-        $this->table = isset ($config['table']) ? $config['table'] : 'base';
+        $this->ranks = isset($config['ranks']) ? $config['ranks'] : 'default';
+        $this->table = isset($config['table']) ? $config['table'] : 'base';
     }
 
     public function getSupportedMods(): array
@@ -24,11 +24,41 @@ class LevelsRanksDriver implements DriverInterface
         return [730, 240];
     }
 
+    /**
+     * Возвращает столбцы для таблицы.
+     * 
+     * @return array[TableColumn] Массив столбцов таблицы.
+     */
+    public function getColumns(): array
+    {
+        return [
+            (new TableColumn('avatar', ''))->image()->setOrderable(false),
+            (new TableColumn('steamid'))->setVisible(false),
+            (new TableColumn('username', __('stats.name')))->setRender('{{KEY}}', "
+                function(data, type, full) {
+                    let a = make('a');
+                    a.setAttribute('href', 'https://steamcommunity.com/profiles/'+full[1]);
+                    a.setAttribute('target', '_blank');
+                    a.innerHTML = data;
+                    return a;
+                }
+            "),
+            (new TableColumn('experience', __('stats.experience')))->setType('text'),
+            (new TableColumn('score', __('stats.score')))->setType('text'),
+            (new TableColumn('kills', __('stats.kills')))->setType('text'),
+            (new TableColumn('deaths', __('stats.deaths')))->setType('text'),
+            (new TableColumn('last_active', __('stats.last_active')))->setType('text'),
+        ];
+    }
     public function getBlocks(): array
     {
         return [
-            'value' => [
-                'text' => 'stats.profile.value',
+            'experience' => [
+                'text' => 'stats.profile.experience',
+                'icon' => 'ph-number-circle-five'
+            ],
+            'score' => [
+                'text' => 'stats.profile.score',
                 'icon' => 'ph-number-circle-five'
             ],
             'kills' => [
@@ -63,32 +93,6 @@ class LevelsRanksDriver implements DriverInterface
                 'text' => 'stats.profile.round_lose',
                 'icon' => 'ph-thumbs-down'
             ],
-        ];
-    }
-
-    /**
-     * Возвращает столбцы для таблицы.
-     * 
-     * @return array[TableColumn] Массив столбцов таблицы.
-     */
-    public function getColumns(): array
-    {
-        return [
-            (new TableColumn('avatar', ''))->image(),
-            (new TableColumn('steam'))->setVisible(false),
-            (new TableColumn('name', __('stats.name')))->setRender('{{KEY}}', "
-                function(data, type, full) {
-                    let a = make('a');
-                    a.setAttribute('href', 'https://steamcommunity.com/profiles/'+full[1]);
-                    a.setAttribute('target', '_blank');
-                    a.innerHTML = data;
-                    return a;
-                }
-            "),
-            (new TableColumn('rank', __('stats.rank')))->image(false)->setOrderable(true)->setDefaultOrder(),
-            (new TableColumn('value', __('stats.score')))->setType('text'),
-            (new TableColumn('kills', __('stats.kills')))->setType('text'),
-            (new TableColumn('deaths', __('stats.deaths')))->setType('text'),
         ];
     }
 
@@ -133,7 +137,7 @@ class LevelsRanksDriver implements DriverInterface
             'recordsTotal' => $paginate->count(),
             'recordsFiltered' => $paginate->count(),
             'data' => TablePreparation::normalize(
-                ['avatar', 'steam', 'name', 'rank', 'value', 'kills', 'deaths'],
+                ['avatar', 'steamid', 'username', 'experience', 'score', 'kills', 'deaths', 'last_active'],
                 $result
             )
         ];
@@ -158,10 +162,10 @@ class LevelsRanksDriver implements DriverInterface
             $select = dbal()->database($mode->dbname)
                 ->table($this->table)
                 ->select()
-                ->where('steam', 'like', "%" . substr(steam()->steamid($found)->RenderSteam2(), 10))
+                ->where('steamid', 'like', "%" . substr(steam()->steamid($found)->RenderSteam2(), 10))
                 ->fetchAll();
 
-            if (empty ($select))
+            if (empty($select))
                 return [];
 
             return [
@@ -183,11 +187,11 @@ class LevelsRanksDriver implements DriverInterface
             }
         }
 
-        if (isset ($search['value']) && !empty ($search['value'])) {
+        if (isset($search['value']) && !empty($search['value'])) {
             // if (strpos($search['value'], 'STEAM_') !== false)
-            $select->where('steam', $search['value']);
+            $select->where('steamid', $search['value']);
             // else
-            $select->where('name', 'like', "%" . $search['value'] . "%");
+            $select->where('username', 'like', "%" . $search['value'] . "%");
         }
 
         foreach ($order as $order) {
@@ -210,8 +214,8 @@ class LevelsRanksDriver implements DriverInterface
         foreach ($results as $result) {
             try {
                 // Преобразование Steam ID в 64-битный формат с помощью Steam API
-                $steamId64 = steam()->steamid($result['steam'])->ConvertToUInt64();
-                $steamIds64[$result['steam']] = $steamId64;
+                $steamId64 = steam()->steamid($result['steamid'])->ConvertToUInt64();
+                $steamIds64[$result['steamid']] = $steamId64;
             } catch (\InvalidArgumentException $e) {
                 logs()->error($e);
 
@@ -229,16 +233,13 @@ class LevelsRanksDriver implements DriverInterface
         $mappedResults = [];
 
         foreach ($results as $result) {
-            $steamId32 = $result['steam'];
-            if (isset ($usersData[$steamId32])) {
+            $steamId32 = $result['steamid'];
+            if (isset($usersData[$steamId32])) {
                 $user = $usersData[$steamId32];
-                $result['steam'] = $usersData[$steamId32]->steamid;
+                $result['steamid'] = $usersData[$steamId32]->steamid;
                 $result['avatar'] = $user->avatar;
             }
 
-            if (isset ($result['rank'])) {
-                $result['rank'] = $this->getRankAsset((int) $result['rank']);
-            }
             $mappedResults[] = $result;
         }
 
@@ -255,6 +256,6 @@ class LevelsRanksDriver implements DriverInterface
      */
     public function getName(): string
     {
-        return "LR DRIVER";
+        return "FABIUS";
     }
 }

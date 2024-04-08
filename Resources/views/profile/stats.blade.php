@@ -3,16 +3,16 @@
 @endpush
 
 @push('profile_body')
-    <h2 class="mb-3">@t('stats.profile.user', [':name' => $user->name])</h2>
-
-    <div class="servers mb-3">
-        @foreach ($servers as $key => $server)
-            <a href="{{ url('profile/' . $user->id)->addParams(['sid' => $key, 'tab' => 'stats']) }}"
-                class="btn size-s @if (isset($server['current'])) primary @else outline @endif">
-                {{ $server['server']->name }}
-            </a>
-        @endforeach
-    </div>
+    @if (sizeof($servers) > 1)
+        <div class="servers mb-3">
+            @foreach ($servers as $key => $server)
+                <a href="{{ url('profile/' . $user->id)->addParams(['sid' => $key, 'tab' => 'stats']) }}"
+                    class="btn size-s @if (isset($server['current'])) primary @else outline @endif">
+                    {{ $server['server']->name }}
+                </a>
+            @endforeach
+        </div>
+    @endif
 
     @if (!empty($stats))
         <div class="row gx-3 gy-3">
@@ -30,6 +30,6 @@
             @endforeach
         </div>
     @else
-        <h3>@t('stats.profile.no_info')</h3>
+        <h3 class="text-center">@t('stats.profile.no_info')</h3>
     @endif
 @endpush

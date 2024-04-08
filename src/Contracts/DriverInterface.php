@@ -12,7 +12,7 @@ interface DriverInterface
      * @var array[TableColumn]
      */
     public function getColumns(): array;
-    public function getSupportedMods() : array;
+    public function getSupportedMods(): array;
 
     public function getData(
         Server $server,
@@ -29,5 +29,7 @@ interface DriverInterface
      * Return driver name
      */
     public function getName(): string;
-    public function getUserStats( int $sid, User $user ) : array;
+    public function getUserStats(int $sid, User $user): array;
+
+    public function getBlocks(): array;
 }

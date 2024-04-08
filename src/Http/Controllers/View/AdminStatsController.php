@@ -31,7 +31,7 @@ class AdminStatsController extends AbstractController
         $result = rep(DatabaseConnection::class)->select();
 
         foreach ($this->driverFactory->getAllDrivers() as $key => $driver) {
-            $result->where('mod', $key);
+            $result->orWhere('mod', $key);
         }
 
         $result = $result->fetchAll();

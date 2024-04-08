@@ -14,6 +14,7 @@ class RoutesExtension implements \Flute\Core\Contracts\ModuleExtensionInterface
     public function register(): void
     {
         router()->group(function (RouteGroup $routeGroup) {
+            $routeGroup->get('', [StatsController::class, 'index']);
             $routeGroup->get('/', [StatsController::class, 'index']);
 
             $routeGroup->get('/get/{sid}', [Api::class, 'getData']);

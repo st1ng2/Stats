@@ -5,6 +5,7 @@ namespace Flute\Modules\Stats\src\Services;
 use Flute\Core\Database\Entities\DatabaseConnection;
 use Flute\Core\Database\Entities\User;
 use Flute\Modules\Stats\src\Driver\DriverFactory;
+use Flute\Modules\Stats\src\Driver\Items\FabiusDriver;
 use Flute\Modules\Stats\src\Driver\Items\LevelsRanksDriver;
 use Flute\Modules\Stats\src\Exceptions\ModNotFoundException;
 use Flute\Modules\Stats\src\Exceptions\ServerNotFoundException;
@@ -13,7 +14,8 @@ class StatsService
 {
     protected array $serverModes = [];
     protected array $defaultDrivers = [
-        LevelsRanksDriver::class
+        LevelsRanksDriver::class,
+        FabiusDriver::class
     ];
 
     protected DriverFactory $driverFactory;
@@ -93,6 +95,21 @@ class StatsService
             $search,
             $order
         );
+    }
+
+    public function getBlocks( ?int $sid = null )
+    {
+        $this->validateServerModes();
+
+        try {
+            $serverConfig = $this->getServerFromModes($sid);
+
+            $factory = $this->getDriverFactory($serverConfig);
+
+            return $factory->getBlocks();
+        } catch (\Exception $e) {
+            return [];
+        }
     }
 
     public function getUserStats(User $user, ?int $sid = null)
@@ -213,7 +230,7 @@ class StatsService
     private function getDriverFactory(array $server)
     {
         try {
-            return $this->driverFactory->createDriver($server['factory'], $server['additional']);
+            return $this->driverFactory->createDriver($server['factory'], json_decode(json_encode($server['additional']), true));
         } catch (\RuntimeException $e) {
             logs()->error($e);
             throw new \Exception(__('def.unknown_error'));
@@ -239,11 +256,19 @@ class StatsService
                 continue;
             }
 
+            $additional = [];
+
+            try {
+                $additional = \Nette\Utils\Json::decode($mode->additional);
+            } catch (\Exception $e) {
+                $additional = [];
+            }
+
             $this->serverModes[$mode->server->id] = [
                 'server' => $mode->server,
                 'db' => $mode->dbname,
                 'factory' => $mode->mod,
-                'additional' => $mode->additional ? \Nette\Utils\Json::decode($mode->additional) : [],
+                'additional' => $additional,
             ];
         }
     }

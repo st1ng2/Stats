@@ -1,6 +1,6 @@
 {
     "name": "Stats",
-    "version": "1.0.0",
+    "version": "1.1",
     "description": "Встраивает статистику игроков на сайт",
     "authors": ["Flames"],
     "providers": ["Flute\\Modules\\Stats\\src\\ServiceProviders\\StatsServiceProvider"],
