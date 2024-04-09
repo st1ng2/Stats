@@ -15,7 +15,8 @@
         'mod_desc' => 'Selecciona el controlador que se utilizará para mostrar las estadísticas',
         'server_label' => 'Servidor',
         'edit_title' => 'Editar vinculación',
-        'edit_description' => 'En esta página puedes cambiar la vinculación de un servidor específico'
+        'edit_description' => 'En esta página puedes cambiar la vinculación de un servidor específico',
+        'settings' => 'Configuración adicional'
     ],
     'profile' => [
         'no_info' => 'No hay información 😢',
@@ -30,5 +31,12 @@
         'assists' => 'Asistencias',
         'round_win' => 'Victorias en rondas',
         'round_lose' => 'Derrotas en rondas',
-    ]
+    ],
+    'name' => 'Nombre',
+    'rank' => 'Rango',
+    'score' => 'Puntos',
+    'kills' => 'Asesinatos',
+    'deaths' => 'Muertes',
+    'last_active' => 'Última actividad',
+    'expirience' => 'Experiencia'
 ];
