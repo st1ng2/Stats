@@ -1,7 +1,7 @@
 # Stats Module for Flute CMS
 
 ## Introduction
-The Stats module is designed for Flute CMS to display in-game player statistics. It provides details such as kills, deaths, and other relevant metrics on the website, enhancing the gaming community experience.
+The Stats module is designed for [Flute CMS](https://github.com/Flute-CMS/cms) to display in-game player statistics. It provides details such as kills, deaths, and other relevant metrics on the website, enhancing the gaming community experience.
 
 ## Key Features
 - **Player Metrics**: Showcases various in-game statistics like kills, deaths, etc.
