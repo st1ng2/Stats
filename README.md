@@ -11,6 +11,7 @@ The Stats module is designed for [Flute CMS](https://github.com/Flute-CMS/cms) t
 This module works with:
 - Levels Ranks
 - Fabius Statistics
+- FirePlayerStats
 
 ## Screenshots
 *Here, you can find a few snapshots of the Stats module in action:*
