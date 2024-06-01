@@ -2,32 +2,23 @@
 
 return [
     'title' => 'Player Statistics',
-    'description' => 'On this page, you can view global player statistics',
+    'description' => 'On this page, you can view the global statistics of players',
+    'module_description' => 'This module displays player statistics from the server',
     'server_not_found' => 'Server not found',
     'params_empty' => 'Some parameters are empty',
     'admin' => [
         'title' => 'Statistics Module',
-        'setting_description' => 'Here you can configure the binding of statistics to each server',
-        'add' => 'Add Binding',
-        'dbname' => 'Database Name',
-        'dbname_desc' => 'This database will be used to display statistics',
-        'server' => 'Linked Server',
-        'add_description' => 'On this page, you can add a new link between the server and the database',
-        'mod' => 'Driver',
-        'mod_desc' => 'Select the driver that will be used to display statistics',
-        'server_label' => 'Server',
-        'edit_title' => 'Edit Binding',
-        'edit_description' => 'On this page, you can change the binding for a specific server',
-        'settings' => 'Additional Settings'
     ],
     'profile' => [
-        'no_info' => 'No information 😢',
+        'no_info' => 'No information available 😢',
         'user' => 'Player Statistics - :name',
         'head' => 'Statistics',
         'value' => 'Points',
         'kills' => 'Kills',
         'deaths' => 'Deaths',
         'shoots' => 'Shots',
+        'experience' => 'Experience',
+        'score' => 'Score',
         'hits' => 'Hits',
         'headshots' => 'Headshots',
         'assists' => 'Assists',
@@ -40,5 +31,6 @@ return [
     'kills' => 'Kills',
     'deaths' => 'Deaths',
     'last_active' => 'Last Active',
-    'expirience' => 'Experience'
+    'experience' => 'Experience',
+    'choose_server' => 'Choose Server'
 ];

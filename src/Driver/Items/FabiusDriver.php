@@ -4,6 +4,7 @@ namespace Flute\Modules\Stats\src\Driver\Items;
 
 use Flute\Core\Database\Entities\Server;
 use Flute\Core\Database\Entities\User;
+use Flute\Core\Table\TableBuilder;
 use Flute\Core\Table\TableColumn;
 use Flute\Core\Table\TablePreparation;
 use Flute\Modules\Stats\src\Contracts\DriverInterface;
@@ -24,31 +25,25 @@ class FabiusDriver implements DriverInterface
         return [730, 240];
     }
 
-    /**
-     * Возвращает столбцы для таблицы.
-     * 
-     * @return array[TableColumn] Массив столбцов таблицы.
-     */
-    public function getColumns(): array
+    public function setColumns(TableBuilder $tableBuilder)
     {
-        return [
-            (new TableColumn('avatar', ''))->image()->setOrderable(false),
-            (new TableColumn('steamid'))->setVisible(false),
-            (new TableColumn('username', __('stats.name')))->setRender('{{KEY}}', "
-                function(data, type, full) {
-                    let a = make('a');
-                    a.setAttribute('href', 'https://steamcommunity.com/profiles/'+full[1]);
-                    a.setAttribute('target', '_blank');
-                    a.innerHTML = data;
-                    return a;
-                }
-            "),
-            (new TableColumn('experience', __('stats.experience')))->setType('text'),
+        $tableBuilder->addColumn((new TableColumn('user_url'))->setVisible(false));
+        $tableBuilder->addCombinedColumn('avatar', 'username', __('def.user'), 'user_url', true);
+
+        $tableBuilder->addColumns([
+            (new TableColumn('experience', __('stats.experience')))->setType('text')->setDefaultOrder(),
             (new TableColumn('score', __('stats.score')))->setType('text'),
             (new TableColumn('kills', __('stats.kills')))->setType('text'),
             (new TableColumn('deaths', __('stats.deaths')))->setType('text'),
+            (new TableColumn('kdr', 'KDR'))->setType('text')->setRender('{{KDR}}', "
+                function(data, type, full) {
+                    let div = make('div');
+                    div.innerHTML = Number(data).toFixed(2);
+                    return div;
+                }
+            "),
             (new TableColumn('last_active', __('stats.last_active')))->setType('text'),
-        ];
+        ]);
     }
     public function getBlocks(): array
     {
@@ -65,33 +60,29 @@ class FabiusDriver implements DriverInterface
                 'text' => 'stats.profile.kills',
                 'icon' => 'ph-smiley-x-eyes'
             ],
-            'deaths' => [
-                'text' => 'stats.profile.deaths',
-                'icon' => 'ph-skull'
-            ],
-            'shoots' => [
-                'text' => 'stats.profile.shoots',
-                'icon' => 'ph-fire'
-            ],
-            'hits' => [
-                'text' => 'stats.profile.hits',
-                'icon' => 'ph-target'
-            ],
-            'headshots' => [
-                'text' => 'stats.profile.headshots',
-                'icon' => 'ph-baby'
-            ],
             'assists' => [
                 'text' => 'stats.profile.assists',
                 'icon' => 'ph-handshake'
             ],
-            'round_win' => [
-                'text' => 'stats.profile.round_win',
-                'icon' => 'ph-trophy'
+            'deaths' => [
+                'text' => 'stats.profile.deaths',
+                'icon' => 'ph-skull'
             ],
-            'round_lose' => [
-                'text' => 'stats.profile.round_lose',
-                'icon' => 'ph-thumbs-down'
+            'damage' => [
+                'text' => 'stats.profile.shoots',
+                'icon' => 'ph-fire'
+            ],
+            'headshot_kills' => [
+                'text' => 'stats.profile.headshots',
+                'icon' => 'ph-baby'
+            ],
+            'mvp' => [
+                'text' => 'stats.profile.headshots',
+                'icon' => 'ph-baby'
+            ],
+            'kdr' => [
+                'text' => 'KDR',
+                'icon' => 'ph-baby'
             ],
         ];
     }
@@ -137,7 +128,7 @@ class FabiusDriver implements DriverInterface
             'recordsTotal' => $paginate->count(),
             'recordsFiltered' => $paginate->count(),
             'data' => TablePreparation::normalize(
-                ['avatar', 'steamid', 'username', 'experience', 'score', 'kills', 'deaths', 'last_active'],
+                ['user_url', 'avatar', 'steamid', 'username', 'experience', 'score', 'kills', 'deaths', 'kdr', 'last_active'],
                 $result
             )
         ];
@@ -145,16 +136,12 @@ class FabiusDriver implements DriverInterface
 
     public function getUserStats(int $sid, User $user): array
     {
-        $found = false;
+        $steam = $user->getSocialNetwork('Steam') ?? $user->getSocialNetwork('HttpsSteam');
 
-        foreach ($user->socialNetworks as $social) {
-            if ($social->socialNetwork->key === "Steam") {
-                $found = $social->value;
-            }
-        }
-
-        if (!$found)
+        if (!$steam)
             return [];
+
+        $steam = steam()->steamid($steam->value)->RenderSteam2();
 
         try {
             $mode = dbmode()->getServerMode(self::class, $sid);
@@ -162,7 +149,7 @@ class FabiusDriver implements DriverInterface
             $select = dbal()->database($mode->dbname)
                 ->table($this->table)
                 ->select()
-                ->where('steamid', 'like', "%" . substr(steam()->steamid($found)->RenderSteam2(), 10))
+                ->where('steamid', 'like', "%" . substr($steam, 10))
                 ->fetchAll();
 
             if (empty($select))
@@ -188,16 +175,17 @@ class FabiusDriver implements DriverInterface
         }
 
         if (isset($search['value']) && !empty($search['value'])) {
-            // if (strpos($search['value'], 'STEAM_') !== false)
-            $select->where('steamid', $search['value']);
-            // else
-            $select->where('username', 'like', "%" . $search['value'] . "%");
+            $value = $search['value'];
+
+            $select->where(function ($select) use ($value) {
+                $select->where('steamid', $value)->orWhere('username', 'like', "%" . $value . "%");
+            });
         }
 
-        foreach ($order as $order) {
-            $columnIndex = $order['column'];
+        foreach ($order as $v) {
+            $columnIndex = $v['column'];
             $columnName = $columns[$columnIndex]['name'];
-            $direction = $order['dir'] === 'asc' ? 'ASC' : 'DESC';
+            $direction = $v['dir'] === 'asc' ? 'ASC' : 'DESC';
 
             if ($columns[$columnIndex]['orderable'] == 'true') {
                 $select->orderBy($columnName, $direction);
@@ -240,6 +228,10 @@ class FabiusDriver implements DriverInterface
                 $result['avatar'] = $user->avatar;
             }
 
+            $result['user_url'] = url('profile/search/'.$result['steam'])->addParams([
+                "else-redirect" => "https://steamcommunity.com/profiles/".$result['steam']
+            ])->get();
+
             $mappedResults[] = $result;
         }
 
@@ -256,6 +248,6 @@ class FabiusDriver implements DriverInterface
      */
     public function getName(): string
     {
-        return "FABIUS";
+        return "FabiusRanks";
     }
 }

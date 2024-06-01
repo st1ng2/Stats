@@ -3,33 +3,42 @@
 @endpush
 
 @push('profile_body')
-    @if (sizeof($servers) > 1)
-        <div class="servers mb-3">
-            @foreach ($servers as $key => $server)
-                <a href="{{ url('profile/' . $user->id)->addParams(['sid' => $key, 'tab' => 'stats']) }}"
-                    class="btn size-s @if (isset($server['current'])) primary @else outline @endif">
-                    {{ $server['server']->name }}
-                </a>
-            @endforeach
-        </div>
-    @endif
+    <div class="row gx-3 gy-3">
+        <div class="col-md-{{ sizeof($servers) > 1 ? 9 : 12 }}">
+            @if (!empty($stats))
+                <div class="row gx-3 gy-3">
+                    @foreach ($blocks as $key => $block)
+                        <div class="col-md-4">
+                            <div class="profile-stat-block">
+                                <i class="ph {{ $block['icon'] }}"></i>
 
-    @if (!empty($stats))
-        <div class="row gx-3 gy-3">
-            @foreach ($blocks as $key => $block)
-                <div class="col-md-4">
-                    <div class="profile-stat-block">
-                        <i class="ph {{ $block['icon'] }}"></i>
-
-                        <div>
-                            <p>{{ __($block['text']) }}</p>
-                            <div>{{ $stats['stats'][$key] }}</div>
+                                <div>
+                                    <p>{{ __($block['text']) }}</p>
+                                    <div>{{ round($stats['stats'][$key], 2) }}</div>
+                                </div>
+                            </div>
                         </div>
+                    @endforeach
+                </div>
+            @else
+                <h3 class="text-center">@t('stats.profile.no_info')</h3>
+            @endif
+        </div>
+
+        @if (sizeof($servers) > 1)
+            <div class="col-md-3">
+                <div class="servers servers-block">
+                    <h3>@t('stats.choose_server')</h3>
+                    <div class="servers-block-container">
+                        @foreach ($servers as $key => $server)
+                            <a href="{{ url('profile/' . $user->id)->addParams(['sid' => $key, 'tab' => 'stats']) }}"
+                                class="servers-block-btn @if (isset($server['current'])) selected @endif">
+                                {{ $server['server']->name }}
+                            </a>
+                        @endforeach
                     </div>
                 </div>
-            @endforeach
-        </div>
-    @else
-        <h3 class="text-center">@t('stats.profile.no_info')</h3>
-    @endif
+            </div>
+        @endif
+    </div>
 @endpush

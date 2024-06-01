@@ -3,7 +3,7 @@
     flex-direction: row;
     align-items: center;
     gap: 15px;
-    border-radius: $border-radius / 2;
+    border-radius: $border-radius-el;
     padding: 15px;
     background-color: $color-card;
 
@@ -43,4 +43,40 @@
     flex-direction: row;
     gap: 5px;
     justify-content: center;
+}
+
+.servers-block {
+    background-color: $color-card;
+    border-radius: $border-radius;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: sticky;
+    top: 110px;
+
+    &-container {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+
+        >a {
+            padding: 10px 15px;
+            font-weight: 500;
+            border-radius: $border-radius-el;
+            transition: $transition;
+            color: darken($color-text, 30);
+            font-size: 14px;
+
+            &:hover {
+                background-color: $color-white-10;
+                color: $color-text;
+            }
+
+            &.selected {
+                color: $color-primary;
+                background-color: $color-primary-light;
+            }
+        }
+    }
 }

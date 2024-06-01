@@ -4,14 +4,12 @@ namespace Flute\Modules\Stats\src\Contracts;
 
 use Flute\Core\Database\Entities\Server;
 use Flute\Core\Database\Entities\User;
+use Flute\Core\Table\TableBuilder;
 use Flute\Core\Table\TableColumn;
 
 interface DriverInterface
 {
-    /**
-     * @var array[TableColumn]
-     */
-    public function getColumns(): array;
+    public function setColumns( TableBuilder $tableBuilder );
     public function getSupportedMods(): array;
 
     public function getData(

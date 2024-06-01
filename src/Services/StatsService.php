@@ -7,7 +7,6 @@ use Flute\Core\Database\Entities\User;
 use Flute\Modules\Stats\src\Driver\DriverFactory;
 use Flute\Modules\Stats\src\Driver\Items\FabiusDriver;
 use Flute\Modules\Stats\src\Driver\Items\LevelsRanksDriver;
-use Flute\Modules\Stats\src\Driver\Items\FirePlayerStatsDriver;
 use Flute\Modules\Stats\src\Exceptions\ModNotFoundException;
 use Flute\Modules\Stats\src\Exceptions\ServerNotFoundException;
 
@@ -16,8 +15,7 @@ class StatsService
     protected array $serverModes = [];
     protected array $defaultDrivers = [
         LevelsRanksDriver::class,
-        FabiusDriver::class,
-        FirePlayerStatsDriver::class
+        FabiusDriver::class
     ];
 
     protected DriverFactory $driverFactory;
@@ -54,7 +52,8 @@ class StatsService
         $factory = $this->getDriverFactory($server);
 
         $table = table(url("stats/get/{$server['server']->id}"));
-        $table->addColumns($factory->getColumns());
+        
+        $factory->setColumns($table);
 
         return $table->render();
     }
@@ -99,7 +98,7 @@ class StatsService
         );
     }
 
-    public function getBlocks( ?int $sid = null )
+    public function getBlocks(?int $sid = null)
     {
         $this->validateServerModes();
 
@@ -161,8 +160,20 @@ class StatsService
      */
     protected function importDrivers(): void
     {
-        foreach ($this->defaultDrivers as $driver) {
-            $this->driverFactory->registerDriver($driver, $driver);
+        $driversNamespace = 'Flute\\Modules\\Stats\\src\\Driver\\Items\\';
+        $driversPath = BASE_PATH . 'app/Modules/Stats/src/Driver/Items';
+
+        $finder = finder()->files()->in($driversPath)->name('*.php');
+
+        foreach ($finder as $file) {
+            $className = $driversNamespace . $file->getBasename('.php');
+
+            if (class_exists($className)) {
+                $driverInstance = new $className();
+                if (method_exists($driverInstance, 'getName')) {
+                    $this->driverFactory->registerDriver($driverInstance->getName(), $className);
+                }
+            }
         }
     }
 
@@ -190,7 +201,7 @@ class StatsService
      */
     private function validateServerModes(): void
     {
-        if (empty ($this->serverModes)) {
+        if (empty($this->serverModes)) {
             throw new \Exception(__('stats.module_is_not_configured'));
         }
     }
@@ -213,7 +224,7 @@ class StatsService
             return $this->serverModes[$key];
         }
 
-        if (!isset ($this->serverModes[$sid])) {
+        if (!isset($this->serverModes[$sid])) {
             throw new ServerNotFoundException($sid);
         }
 
@@ -248,13 +259,15 @@ class StatsService
         $drivers = $this->driverFactory->getAllDrivers();
 
         foreach ($drivers as $key => $driver) {
-            $modes = $modes->orWhere('mod', $key);
+            $modes->orWhere(function($query) use ($key, $driver) {
+                return $query->where('mod', $key)->orWhere('mod', $driver);
+            });
         }
 
         $modes = $modes->fetchAll();
 
         foreach ($modes as $mode) {
-            if (!config("database.databases.{$mode->dbname}") || empty ($mode->server)) {
+            if (!config("database.databases.{$mode->dbname}") || empty($mode->server)) {
                 continue;
             }
 
@@ -269,9 +282,29 @@ class StatsService
             $this->serverModes[$mode->server->id] = [
                 'server' => $mode->server,
                 'db' => $mode->dbname,
-                'factory' => $mode->mod,
+                'factory' => $this->getServerModeDriver($mode->mod),
                 'additional' => $additional,
             ];
         }
+    }
+
+    /**
+     * Get the server mode driver normal key
+     * 
+     * @return string|null
+     */
+    protected function getServerModeDriver(string $driver)
+    {
+        $drivers = $this->driverFactory->getAllDrivers();
+
+        if (isset($drivers[$driver])) {
+            return $driver;
+        }
+
+        if ($search = array_search($driver, $drivers)) {
+            return $search;
+        }
+
+        return null;
     }
 }
