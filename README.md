@@ -16,7 +16,8 @@ This module works with:
 ## Screenshots
 *Here, you can find a few snapshots of the Stats module in action:*
 
-![image](https://github.com/Flute-CMS/Stats/assets/62756604/4b0819d4-5ea4-4f14-aefc-bfd067733ef5)
+![image](https://github.com/Flute-CMS/Stats/assets/62756604/323e8e3b-7e4d-4e13-b20c-d4aab6c52169)
+
 ![image](https://github.com/Flute-CMS/Stats/assets/62756604/04c2f1c4-e4de-4729-943b-d43a028c5cbd)
 
 
