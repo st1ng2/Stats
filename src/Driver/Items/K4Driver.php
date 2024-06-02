@@ -111,7 +111,7 @@ class K4Driver implements DriverInterface
         $steam = steam()->steamid($steam->value)->RenderSteam2();
 
         try {
-            $mode = dbmode()->getServerMode(self::class, $sid);
+            $mode = dbmode()->getServerMode($this->getName(), $sid);
 
             $select = dbal()->database($mode->dbname)
                 ->table('stats')

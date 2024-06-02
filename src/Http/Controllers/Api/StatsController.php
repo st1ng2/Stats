@@ -41,7 +41,11 @@ class StatsController extends AbstractController
         } catch (ServerNotFoundException $e) {
             return $this->error(__('stats.server_not_found'), 404);
         } catch (\Exception $e) {
-            return $this->error($e->getMessage(), 500);
+            if( is_debug() ) {
+                return $this->error($e->getMessage(), 500);
+            }
+
+            return $this->error(__('def.unknown_error'), 500);
         } 
     }
 }
